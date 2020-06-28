@@ -12,8 +12,8 @@ import java.util.*
 
 class SignupActivity : AppCompatActivity() {
 
-    var userAvatar: String = "profileDefault"
-    var avatarBgColor: String = "[0.5,0.5,0.5,1]"
+    private var userAvatar: String = "profileDefault"
+    private var avatarBgColor: String = "[0.5,0.5,0.5,1]"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,21 +54,29 @@ class SignupActivity : AppCompatActivity() {
 
         AuthService.registerUser(this, email, password){ registrationSuccessful ->
             if(registrationSuccessful){
-                Toast.makeText(this, "Registered successfully", Toast.LENGTH_SHORT ).show();
+                Toast.makeText(this, "Registered successfully", Toast.LENGTH_SHORT ).show()
 
                 AuthService.loginUser(this, email,password){ loginSuccessful ->
                     if(loginSuccessful){
-                        Toast.makeText(this, "Login successfull", Toast.LENGTH_SHORT ).show();
-
+                        Toast.makeText(this, "Login successfull", Toast.LENGTH_SHORT ).show()
+                        AuthService.addUser(this, userName, email, userAvatar, avatarBgColor){ userAdded ->
+                            if(userAdded){
+                                Toast.makeText(this, "User Created successfully", Toast.LENGTH_SHORT ).show()
+                                finish()
+                            }
+                            else{
+                                Toast.makeText(this, "Failed to Create User", Toast.LENGTH_SHORT ).show()
+                            }
+                        }
                     }
                     else{
-                        Toast.makeText(this, "Login Failed!", Toast.LENGTH_SHORT ).show();
+                        Toast.makeText(this, "Login Failed!", Toast.LENGTH_SHORT ).show()
                     }
                 }
 
             }
             else{
-                Toast.makeText(this, "Registeration failed!", Toast.LENGTH_SHORT ).show();
+                Toast.makeText(this, "Registeration failed!", Toast.LENGTH_SHORT ).show()
             }
         }
     }
