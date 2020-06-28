@@ -7,3 +7,6 @@ const val URL_ADD_USER = "${BASE_URL}user/add"
 
 
 const val REQUEST_TIMEOUT = 15000
+const val MIN_PASSWORD_LENGTH = 6
+
+const val BROADCAST_USER_DATA_CHANGE = "BROADCAST_USER_DATA_CHANGE"
