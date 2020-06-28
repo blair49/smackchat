@@ -47,9 +47,25 @@ class SignupActivity : AppCompatActivity() {
     }
 
     fun signupBtnClicked(view: View){
-        AuthService.registerUser(this, "j@j.com", "123456"){complete ->
-            if(complete){
+
+        val userName = signupUserNameText.text.toString()
+        val email = signupEmailText.text.toString()
+        val password = signupPasswordText.text.toString()
+
+        AuthService.registerUser(this, email, password){ registrationSuccessful ->
+            if(registrationSuccessful){
                 Toast.makeText(this, "Registered successfully", Toast.LENGTH_SHORT ).show();
+
+                AuthService.loginUser(this, email,password){ loginSuccessful ->
+                    if(loginSuccessful){
+                        Toast.makeText(this, "Login successfull", Toast.LENGTH_SHORT ).show();
+
+                    }
+                    else{
+                        Toast.makeText(this, "Login Failed!", Toast.LENGTH_SHORT ).show();
+                    }
+                }
+
             }
             else{
                 Toast.makeText(this, "Registeration failed!", Toast.LENGTH_SHORT ).show();
