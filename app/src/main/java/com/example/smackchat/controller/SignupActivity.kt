@@ -101,7 +101,7 @@ class SignupActivity : AppCompatActivity() {
         }
     }
 
-    fun errorToast(){
+    private fun errorToast(){
         Toast.makeText(this, "Something went wrong, please try again",
             Toast.LENGTH_LONG).show()
         showProgressSpinner(false)

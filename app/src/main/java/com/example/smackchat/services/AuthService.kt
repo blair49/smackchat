@@ -8,10 +8,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.example.smackchat.utilities.REQUEST_TIMEOUT
-import com.example.smackchat.utilities.URL_ADD_USER
-import com.example.smackchat.utilities.URL_LOGIN
-import com.example.smackchat.utilities.URL_REGISTER
+import com.example.smackchat.utilities.*
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -75,7 +72,7 @@ object AuthService {
 
         }, Response.ErrorListener { error ->
             //Handle Error
-            Log.d("ERROR", "Could not register user $error")
+            Log.d("ERROR", "Could not login user $error")
             complete(false)
         }){
             override fun getBodyContentType(): String {
@@ -86,6 +83,14 @@ object AuthService {
                 return requestBody.toByteArray()
             }
         }
+
+        //Set custom timeout to prevent request timeout due to heroku startup delay
+        loginRequest.retryPolicy = DefaultRetryPolicy(
+            REQUEST_TIMEOUT,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
         Volley.newRequestQueue(context).add(loginRequest)
     }
 
@@ -113,7 +118,7 @@ object AuthService {
             }
 
         }, Response.ErrorListener { error ->
-            Log.d("ERROR", "Could not register user $error")
+            Log.d("ERROR", "Could not add user $error")
             complete(false)
         }){
             override fun getBodyContentType(): String {
@@ -132,5 +137,38 @@ object AuthService {
         }
 
         Volley.newRequestQueue(context).add(addUserRequest)
+    }
+
+    fun findUserByEmail(context: Context, complete: (Boolean) -> Unit){
+        val url = "${URL_FIND_USER}${userEmail}"
+        val findRequest = object : JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
+            try {
+                UserDataService.userName = response.getString("name")
+                UserDataService.email = response.getString("email")
+                UserDataService.avatar = response.getString("avatarName")
+                UserDataService.avatarBgColor = response.getString("avatarColor")
+                UserDataService.id = response.getString("_id")
+
+                complete(true)
+            } catch (e: JSONException){
+                Log.d("JSON", "EXC : "+ e.localizedMessage)
+                complete(false)
+            }
+        }, Response.ErrorListener {error ->
+            Log.d("ERROR", "Could not find user: $error")
+            complete(false)
+        }){
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers.put("Authorization", "Bearer $authToken")
+                return headers
+            }
+        }
+
+        Volley.newRequestQueue(context).add(findRequest)
     }
 }
