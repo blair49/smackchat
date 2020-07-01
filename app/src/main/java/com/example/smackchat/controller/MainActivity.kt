@@ -8,6 +8,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.drawerlayout.widget.DrawerLayout
@@ -23,11 +25,19 @@ import com.example.smackchat.utilities.BROADCAST_USER_DATA_CHANGE
 import com.example.smackchat.utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
+    lateinit var channelAdapter: ArrayAdapter<Channel>
+
+    private fun setupAdapters() {
+        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
+        channel_list.adapter = channelAdapter
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,12 +46,9 @@ class MainActivity : AppCompatActivity() {
 
         socket.connect()
         socket.on("channelCreated", onNewChannel)
-    }
-
-    override fun onResume() {
+        setupAdapters()
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE))
-        super.onResume()
     }
 
     override fun onDestroy() {
@@ -50,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
     private val userDataChangeReceiver = object : BroadcastReceiver(){
-        override fun onReceive(context: Context?, intent: Intent?) {
+        override fun onReceive(context: Context, intent: Intent?) {
             if(AuthService.isLoggedIn){
                 userNameNavHeader.text = UserDataService.userName
                 userEmailNavHeader.text = UserDataService.email
@@ -60,6 +67,12 @@ class MainActivity : AppCompatActivity() {
                 userImageNavHeader.setBackgroundColor(UserDataService
                                 .getAvatarBgColor(UserDataService.avatarBgColor))
                 loginButtonNavHeader.text = "Logout"
+
+                MessageService.getChannels(context){ foundChannels ->
+                    if(foundChannels){
+                        channelAdapter.notifyDataSetChanged()
+                    }
+                }
             }
         }
     }
