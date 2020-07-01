@@ -6,7 +6,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -15,6 +19,7 @@ import com.example.smackchat.R
 import com.example.smackchat.services.AuthService
 import com.example.smackchat.services.UserDataService
 import com.example.smackchat.utilities.BROADCAST_USER_DATA_CHANGE
+import kotlinx.android.synthetic.main.add_channel_dialog.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -26,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        
+        hideKeyboard()
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE))
     }
@@ -62,10 +67,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun addChannelClicked(view: View){
-
+        if(AuthService.isLoggedIn){
+            val builder = AlertDialog.Builder(this)
+            val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
+            builder.setView(dialogView)
+                .setPositiveButton("Add"){ dialogInterface, i ->  
+                    val channelNameText = dialogView.findViewById<EditText>(R.id.addChannelNameText)
+                    val channelDescriptionText = dialogView.findViewById<EditText>(R.id.addChannelDescriptionText)
+                    val channelName = channelNameText.text.toString()
+                    val channelDescription = channelDescriptionText.text.toString()
+                    //create channel with channel name and description
+                    hideKeyboard()
+                }
+                .setNegativeButton("Cancel"){ dialogInterface, i ->
+                    //close the dialog
+                    hideKeyboard()
+                }
+                .show()
+        }
     }
 
     fun sendMsgBtnClicked(view: View){
+
+    }
+
+    fun hideKeyboard(){
+        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        if(inputManager.isAcceptingText){
+            inputManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+        }
 
     }
 }

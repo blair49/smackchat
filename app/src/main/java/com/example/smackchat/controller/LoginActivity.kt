@@ -1,9 +1,11 @@
 package com.example.smackchat.controller
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.smackchat.R
@@ -31,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
             return
         }
         showProgressSpinner(true)
+        hideKeyboard()
         AuthService.loginUser(this, email, password){ loginSuccessful ->
             if (loginSuccessful){
                 AuthService.findUserByEmail(this){ userFound->
@@ -72,5 +75,13 @@ class LoginActivity : AppCompatActivity() {
         val signupIntent = Intent(this, SignupActivity::class.java)
         startActivity(signupIntent)
         finish()
+    }
+
+    fun hideKeyboard(){
+        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        if(inputManager.isAcceptingText){
+            inputManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+        }
+
     }
 }
