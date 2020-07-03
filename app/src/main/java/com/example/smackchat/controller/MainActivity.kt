@@ -18,6 +18,7 @@ import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.smackchat.R
 import com.example.smackchat.model.Channel
+import com.example.smackchat.model.Message
 import com.example.smackchat.services.AuthService
 import com.example.smackchat.services.MessageService
 import com.example.smackchat.services.UserDataService
@@ -48,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         socket.connect()
         socket.on("channelCreated", onNewChannel)
+        socket.on("messageCreated", onNewMessage)
         setupAdapters()
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE))
@@ -151,8 +153,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val onNewMessage = Emitter.Listener { args ->
+        runOnUiThread {
+            val messageBody = args[0] as String
+            val channelId = args[2] as String
+            val userName = args[3] as String
+            val userAvatar = args[4] as String
+            val userAvatarBgColor = args[5] as String
+            val id = args[6] as String
+            val timeStamp = args[7] as String
+            val newMessage = Message(messageBody, userName, channelId, userAvatar,
+                userAvatarBgColor, id, timeStamp)
+            MessageService.messages.add(newMessage)
+
+        }
+    }
+
     fun sendMsgBtnClicked(view: View){
-        hideKeyboard()
+        if(App.prefs.isLoggedIn && messageEditText.text.isNotEmpty() && selectedChannel != null){
+            val userId = UserDataService.id
+            val channelId = selectedChannel!!.id
+            socket.emit("newMessage", messageEditText.text.toString(), userId, channelId,
+                UserDataService.userName, UserDataService.avatar, UserDataService.avatarBgColor)
+            messageEditText.text.clear()
+        }
     }
 
     fun hideKeyboard(){
