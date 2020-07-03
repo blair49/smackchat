@@ -38,8 +38,6 @@ class LoginActivity : AppCompatActivity() {
             if (loginSuccessful){
                 AuthService.findUserByEmail(this){ userFound->
                     if(userFound){
-                        val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
-                        LocalBroadcastManager.getInstance(this).sendBroadcast(userDataChange)
                         showProgressSpinner(false)
                         finish()
                     } else{
