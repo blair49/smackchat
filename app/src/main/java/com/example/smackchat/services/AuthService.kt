@@ -9,7 +9,6 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.example.smackchat.controller.App
 import com.example.smackchat.utilities.*
 import org.json.JSONException
@@ -20,7 +19,7 @@ object AuthService {
 //    var isLoggedIn = false
 //    var authToken = ""
 
-    fun registerUser(context: Context, email:String, password:String, complete:(Boolean) -> Unit){
+    fun registerUser(email: String, password: String, complete: (Boolean) -> Unit){
         val url = URL_REGISTER
 
         val jsonBody = JSONObject()
@@ -51,7 +50,7 @@ object AuthService {
         App.prefs.requestQueue.add(registerRequest)
     }
 
-    fun loginUser(context: Context, email: String, password: String, complete: (Boolean) -> Unit){
+    fun loginUser(email: String, password: String, complete: (Boolean) -> Unit){
         val url = URL_LOGIN
 
         val jsonBody = JSONObject()
@@ -59,7 +58,8 @@ object AuthService {
         jsonBody.put("password", password)
         val requestBody = jsonBody.toString()
 
-        val loginRequest = object : JsonObjectRequest(Method.POST, url, null, Response.Listener { response ->
+        val loginRequest = object : JsonObjectRequest(Method.POST, url, null,
+            Response.Listener { response ->
             //Handle response
             try {
                 App.prefs.userEmail = response.getString("user")
@@ -97,7 +97,8 @@ object AuthService {
         App.prefs.requestQueue.add(loginRequest)
     }
 
-    fun addUser(context: Context, name:String, email: String, avatar: String, avatarBgColor: String, complete: (Boolean) -> Unit){
+    fun addUser(name: String, email: String, avatar: String, avatarBgColor: String,
+                complete: (Boolean) -> Unit){
         val url = URL_ADD_USER
 
         val jsonBody = JSONObject()
@@ -107,7 +108,8 @@ object AuthService {
         jsonBody.put("avatarColor", avatarBgColor)
         val requestBody = jsonBody.toString()
 
-        val addUserRequest = object : JsonObjectRequest(Method.POST, url, null, Response.Listener {response ->
+        val addUserRequest = object : JsonObjectRequest(Method.POST, url, null,
+            Response.Listener {response ->
             try {
                 UserDataService.userName = response.getString("name")
                 UserDataService.email = response.getString("email")
@@ -144,7 +146,8 @@ object AuthService {
 
     fun findUserByEmail(context: Context, complete: (Boolean) -> Unit){
         val url = "${URL_FIND_USER}${App.prefs.userEmail}"
-        val findRequest = object : JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
+        val findRequest = object : JsonObjectRequest(Method.GET, url, null,
+            Response.Listener { response ->
             try {
                 UserDataService.userName = response.getString("name")
                 UserDataService.email = response.getString("email")

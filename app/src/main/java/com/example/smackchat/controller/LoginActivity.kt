@@ -7,10 +7,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.smackchat.R
 import com.example.smackchat.services.AuthService
-import com.example.smackchat.utilities.BROADCAST_USER_DATA_CHANGE
 import kotlinx.android.synthetic.main.activity_login.*
 
 class LoginActivity : AppCompatActivity() {
@@ -34,7 +32,7 @@ class LoginActivity : AppCompatActivity() {
         }
         showProgressSpinner(true)
         hideKeyboard()
-        AuthService.loginUser(this, email, password){ loginSuccessful ->
+        AuthService.loginUser(email, password){ loginSuccessful ->
             if (loginSuccessful){
                 AuthService.findUserByEmail(this){ userFound->
                     if(userFound){

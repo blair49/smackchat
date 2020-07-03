@@ -70,12 +70,11 @@ class SignupActivity : AppCompatActivity() {
         }
 
         showProgressSpinner(true)
-        AuthService.registerUser(this, email, password){ registrationSuccessful ->
+        AuthService.registerUser(email, password){ registrationSuccessful ->
             if(registrationSuccessful){
-                AuthService.loginUser(this, email,password){ loginSuccessful ->
+                AuthService.loginUser(email, password){ loginSuccessful ->
                     if(loginSuccessful){
-                        AuthService.addUser(this, userName, email, userAvatar,
-                            avatarBgColor){ userAdded ->
+                        AuthService.addUser(userName, email, userAvatar, avatarBgColor){ userAdded ->
                             if(userAdded){
                                 Toast.makeText(this, "User Created successfully",
                                     Toast.LENGTH_SHORT ).show()

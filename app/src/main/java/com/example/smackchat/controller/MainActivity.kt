@@ -6,15 +6,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.smackchat.R
 import com.example.smackchat.model.Channel
@@ -26,12 +26,14 @@ import com.example.smackchat.utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    var selectedChannel:Channel? = null
 
     private fun setupAdapters() {
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
@@ -54,6 +56,12 @@ class MainActivity : AppCompatActivity() {
         if (App.prefs.isLoggedIn){
             AuthService.findUserByEmail(this){}
         }
+
+        channel_list.setOnItemClickListener { _, _, i, _ ->
+            selectedChannel = MessageService.channels[i]
+            drawer_layout.closeDrawer(GravityCompat.START)
+            updateWithChannel()
+        }
     }
 
     override fun onDestroy() {
@@ -75,14 +83,25 @@ class MainActivity : AppCompatActivity() {
                                 .getAvatarBgColor(UserDataService.avatarBgColor))
                 loginButtonNavHeader.text = "Logout"
 
-                MessageService.getChannels(context){ foundChannels ->
+                MessageService.getChannels { foundChannels ->
                     if(foundChannels){
-                        channelAdapter.notifyDataSetChanged()
+                        if(MessageService.channels.count() > 0){
+                            selectedChannel = MessageService.channels[0]
+                            channelAdapter.notifyDataSetChanged()
+                            updateWithChannel()
+                        }
+
                     }
                 }
             }
         }
     }
+
+    fun updateWithChannel(){
+        currentChannelName.text = selectedChannel?.toString()
+        //download messages for channel
+    }
+
     fun loginBtnNavClicked(view: View){
         if(App.prefs.isLoggedIn){
             //logout
