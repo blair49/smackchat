@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
     private val userDataChangeReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context, intent: Intent?) {
             if(App.prefs.isLoggedIn){
-                println("User Data change received")
+
                 userNameNavHeader.text = UserDataService.userName
                 userEmailNavHeader.text = UserDataService.email
                 val resourceId = resources.getIdentifier(UserDataService.avatar, "drawable"
@@ -102,6 +102,15 @@ class MainActivity : AppCompatActivity() {
     fun updateWithChannel(){
         currentChannelName.text = selectedChannel?.toString()
         //download messages for channel
+        if(selectedChannel != null){
+            MessageService.getMessages(selectedChannel!!.id){ foundMessages ->
+                if (foundMessages){
+                    for (message in MessageService.messages){
+                        println(message.message)
+                    }
+                }
+            }
+        }
     }
 
     fun loginBtnNavClicked(view: View){
@@ -142,30 +151,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val onNewChannel = Emitter.Listener { args ->
-        runOnUiThread {
-            val channelName = args[0] as String
-            val channelDescription = args[1] as String
-            val channelId = args[2] as String
+        if(App.prefs.isLoggedIn) {
+            runOnUiThread {
+                val channelName = args[0] as String
+                val channelDescription = args[1] as String
+                val channelId = args[2] as String
 
-            val newChannel = Channel(channelName, channelDescription,channelId)
-            MessageService.channels.add(newChannel)
-            channelAdapter.notifyDataSetChanged()
+                val newChannel = Channel(channelName, channelDescription, channelId)
+                MessageService.channels.add(newChannel)
+                channelAdapter.notifyDataSetChanged()
+            }
         }
     }
 
     private val onNewMessage = Emitter.Listener { args ->
-        runOnUiThread {
-            val messageBody = args[0] as String
-            val channelId = args[2] as String
-            val userName = args[3] as String
-            val userAvatar = args[4] as String
-            val userAvatarBgColor = args[5] as String
-            val id = args[6] as String
-            val timeStamp = args[7] as String
-            val newMessage = Message(messageBody, userName, channelId, userAvatar,
-                userAvatarBgColor, id, timeStamp)
-            MessageService.messages.add(newMessage)
+        if(App.prefs.isLoggedIn) {
+            runOnUiThread {
+                val channelId = args[2] as String
+                if(channelId.equals(selectedChannel?.id)) {
+                    val messageBody = args[0] as String
 
+                    val userName = args[3] as String
+                    val userAvatar = args[4] as String
+                    val userAvatarBgColor = args[5] as String
+                    val id = args[6] as String
+                    val timeStamp = args[7] as String
+                    val newMessage = Message(
+                        messageBody, userName, channelId, userAvatar,
+                        userAvatarBgColor, id, timeStamp
+                    )
+                    MessageService.messages.add(newMessage)
+                }
+            }
         }
     }
 

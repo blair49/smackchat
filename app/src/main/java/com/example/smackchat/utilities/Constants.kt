@@ -7,6 +7,7 @@ const val URL_LOGIN = "${BASE_URL}account/login"
 const val URL_ADD_USER = "${BASE_URL}user/add"
 const val URL_FIND_USER = "${BASE_URL}user/byEmail/"
 const val URL_GET_CHANNELS = "${BASE_URL}channel/"
+const val URL_GET_MESSAGES = "${BASE_URL}message/byChannel/"
 
 const val REQUEST_TIMEOUT = 15000
 const val MIN_PASSWORD_LENGTH = 6

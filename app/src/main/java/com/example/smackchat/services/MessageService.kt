@@ -7,6 +7,7 @@ import com.example.smackchat.controller.App
 import com.example.smackchat.model.Channel
 import com.example.smackchat.model.Message
 import com.example.smackchat.utilities.URL_GET_CHANNELS
+import com.example.smackchat.utilities.URL_GET_MESSAGES
 import org.json.JSONException
 
 object MessageService {
@@ -17,8 +18,8 @@ object MessageService {
     fun getChannels(complete: (Boolean) -> Unit){
         val channelRequest = object : JsonArrayRequest(Method.GET, URL_GET_CHANNELS,
                                     null, Response.Listener { response ->
+            clearChannels()
             try {
-
                 for (x in 0 until response.length()){
                     val channel = response.getJSONObject(x)
                     val channelName = channel.getString("name")
@@ -32,6 +33,7 @@ object MessageService {
 
             } catch (e: JSONException){
                 Log.d("JSON", "EXC:" + e.localizedMessage)
+                complete(false)
             }
 
         }, Response.ErrorListener { error ->
@@ -51,4 +53,58 @@ object MessageService {
 
         App.prefs.requestQueue.add(channelRequest)
     }
+
+    fun getMessages(channelId:String, complete: (Boolean) -> Unit){
+        val url = "$URL_GET_MESSAGES$channelId"
+
+        val messageRequest = object : JsonArrayRequest(Method.GET, url, null,
+            Response.Listener { response ->
+                clearMessages()
+                try {
+                    for(x in 0 until response.length()){
+                        val newMessage = response.getJSONObject(x)
+                        val messageBody = newMessage.getString("messageBody")
+                        val channelId = newMessage.getString("channelId")
+                        val id = newMessage.getString("_id")
+                        val username = newMessage.getString("userName")
+                        val userAvatar = newMessage.getString("userAvatar")
+                        val userAvatarBgColor = newMessage.getString("userAvatarColor")
+                        val timeStamp = newMessage.getString("timeStamp")
+                        //Create a message object and add it to message list
+                        val message = Message(messageBody, username, channelId, userAvatar,
+                                        userAvatarBgColor, id, timeStamp)
+                        this.messages.add(message)
+                    }
+                    complete(true)
+
+                } catch (e: JSONException){
+                    Log.d("JSON", "EXC:" + e.localizedMessage)
+                    complete(false)
+                }
+
+        }, Response.ErrorListener {
+            Log.d("ERROR", "Could not retrieve messages")
+            complete(false)
+        }){
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers.put("Authorization", "Bearer ${App.prefs.authToken}")
+                return headers
+            }
+        }
+        App.prefs.requestQueue.add(messageRequest)
+    }
+
+    fun clearMessages(){
+        messages.clear()
+    }
+
+    fun clearChannels(){
+        channels.clear()
+    }
+
 }
