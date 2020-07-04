@@ -16,7 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.smackchat.R
+import com.example.smackchat.adapters.MessageAdapter
 import com.example.smackchat.model.Channel
 import com.example.smackchat.model.Message
 import com.example.smackchat.services.AuthService
@@ -34,11 +36,17 @@ class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    lateinit var messageAdapter: MessageAdapter
     var selectedChannel:Channel? = null
 
     private fun setupAdapters() {
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
         channel_list.adapter = channelAdapter
+
+        messageAdapter = MessageAdapter(this, MessageService.messages)
+        messageListView.adapter = messageAdapter
+        val layoutManager = LinearLayoutManager(this)
+        messageListView.layoutManager = layoutManager
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,8 +113,10 @@ class MainActivity : AppCompatActivity() {
         if(selectedChannel != null){
             MessageService.getMessages(selectedChannel!!.id){ foundMessages ->
                 if (foundMessages){
-                    for (message in MessageService.messages){
-                        println(message.message)
+                    messageAdapter.notifyDataSetChanged()
+                    if (messageAdapter.itemCount > 0){
+                        //scroll to the most recent message
+                        messageListView.smoothScrollToPosition(messageAdapter.itemCount - 1)
                     }
                 }
             }
@@ -122,7 +132,10 @@ class MainActivity : AppCompatActivity() {
             userImageNavHeader.setImageResource(R.drawable.profiledefault)
             userImageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             loginButtonNavHeader.text = "Login"
-
+            selectedChannel=null
+            currentChannelName.text = "Please login"
+            messageAdapter.notifyDataSetChanged()
+            channelAdapter.notifyDataSetChanged()
         } else {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
@@ -181,6 +194,8 @@ class MainActivity : AppCompatActivity() {
                         userAvatarBgColor, id, timeStamp
                     )
                     MessageService.messages.add(newMessage)
+                    messageAdapter.notifyDataSetChanged()
+                    messageListView.smoothScrollToPosition(messageAdapter.itemCount - 1)
                 }
             }
         }
