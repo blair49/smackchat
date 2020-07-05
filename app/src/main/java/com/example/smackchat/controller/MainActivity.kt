@@ -4,13 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -38,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var channelAdapter: ArrayAdapter<Channel>
     lateinit var messageAdapter: MessageAdapter
     var selectedChannel:Channel? = null
+    private lateinit var toolbar: Toolbar
+    private lateinit var drawerToggle : ActionBarDrawerToggle
 
     private fun setupAdapters() {
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
@@ -52,8 +55,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        toolbar= findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        drawerToggle = setupDrawerToggle()
+        // Setup toggle to display hamburger icon with nice animation
+        drawerToggle.setDrawerIndicatorEnabled(true)
+        drawerToggle.syncState()
+        // Tie DrawerLayout events to the ActionBarToggle
+        drawer_layout.addDrawerListener(drawerToggle)
 
         socket.connect()
         socket.on("channelCreated", onNewChannel)
@@ -65,6 +75,9 @@ class MainActivity : AppCompatActivity() {
         //Load user data if previously logged in
         if (App.prefs.isLoggedIn){
             AuthService.findUserByEmail(this){}
+        } else {
+            val loginIntent = Intent(this, LoginActivity::class.java)
+            startActivity(loginIntent)
         }
 
         channel_list.setOnItemClickListener { _, _, i, _ ->
@@ -74,12 +87,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupDrawerToggle(): ActionBarDrawerToggle {
+        return ActionBarDrawerToggle(this, drawer_layout, toolbar,
+                                R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        drawerToggle.syncState()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Pass any configuration change to the drawer toggles
+        drawerToggle.onConfigurationChanged(newConfig)
+    }
+
     override fun onDestroy() {
         socket.disconnect()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
 
         super.onDestroy()
     }
+
     private val userDataChangeReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context, intent: Intent?) {
             if(App.prefs.isLoggedIn){

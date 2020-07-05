@@ -5,12 +5,12 @@ import android.content.SharedPreferences
 import com.android.volley.toolbox.Volley
 
 class SharedPrefs(context: Context) {
-    val PREFS_FILENAME = "prefs"
-    val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILENAME, 0)
+    private val PREFS_FILENAME = "prefs"
+    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILENAME, 0)
 
-    val IS_LOGGED_IN = "isLoggedIn"
-    val AUTH_TOKEN = "authToken"
-    val USER_EMAIL = "userEmail"
+    private val IS_LOGGED_IN = "isLoggedIn"
+    private val AUTH_TOKEN = "authToken"
+    private val USER_EMAIL = "userEmail"
 
     var isLoggedIn: Boolean
         get() = prefs.getBoolean(IS_LOGGED_IN, false)
