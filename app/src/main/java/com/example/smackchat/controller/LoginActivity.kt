@@ -55,7 +55,7 @@ class LoginActivity : AppCompatActivity() {
         showProgressSpinner(false)
     }
 
-    fun showProgressSpinner(show : Boolean){
+    private fun showProgressSpinner(show : Boolean){
         if (show) {
             loginProgressBar.visibility = View.VISIBLE
         }

@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
@@ -32,6 +34,7 @@ import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -74,7 +77,13 @@ class MainActivity : AppCompatActivity() {
 
         //Load user data if previously logged in
         if (App.prefs.isLoggedIn){
-            AuthService.findUserByEmail(this){}
+            AuthService.findUserByEmail(this){ foundUser ->
+                if(!foundUser) {
+                    UserDataService.logout()
+                    val loginIntent = Intent(this, LoginActivity::class.java)
+                    startActivity(loginIntent)
+                }
+            }
         } else {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
@@ -119,30 +128,49 @@ class MainActivity : AppCompatActivity() {
                 userEmailNavHeader.text = UserDataService.email
                 val resourceId = resources.getIdentifier(UserDataService.avatar, "drawable"
                     , packageName)
-                userImageNavHeader.setImageResource(resourceId)
-                userImageNavHeader.setBackgroundColor(UserDataService
-                                .getAvatarBgColor(UserDataService.avatarBgColor))
-                loginButtonNavHeader.text = "Logout"
 
-                MessageService.getChannels { foundChannels ->
-                    if(foundChannels){
-                        if(MessageService.channels.count() > 0){
-                            selectedChannel = MessageService.channels[0]
-                            channelAdapter.notifyDataSetChanged()
-                            updateWithChannel()
-                        }
+                UserDataService.profilePicture?.let {profilePicture ->
+                    val imageFilePath = "${App.prefs.profilePicturePath}${File.separator}$profilePicture"
+                    val imageFile = File(context.filesDir, imageFilePath)
 
+                    if(imageFile.exists()){
+                        val imageBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
+                        userImageNavHeader.setImageBitmap(imageBitmap)
+                    } else{
+                        Log.d("ERROR", "Error getting photo")
+                        userImageNavHeader.setImageResource(resourceId)
+                        userImageNavHeader.setBackgroundColor(UserDataService
+                            .getAvatarBgColor(UserDataService.avatarBgColor))
                     }
+                }
+
+                loginButtonNavHeader.text = "Logout"
+                refreshChannels()
+            }
+        }
+    }
+
+    private fun refreshChannels(){
+        currentChannelName.text = "No channels found!"
+        showProgressBar(true)
+        MessageService.getChannels { foundChannels ->
+            showProgressBar(false)
+            if(foundChannels){
+                if(MessageService.channels.count() > 0){
+                    selectedChannel = MessageService.channels[0]
+                    channelAdapter.notifyDataSetChanged()
+                    updateWithChannel()
                 }
             }
         }
     }
 
-    fun updateWithChannel(){
+    private fun updateWithChannel(){
         currentChannelName.text = selectedChannel?.toString()
         //download messages for channel
         if(selectedChannel != null){
-            MessageService.getMessages(selectedChannel!!.id){ foundMessages ->
+            showProgressBar(true)
+            MessageService.getMessages(this, selectedChannel!!.id){ foundMessages ->
                 if (foundMessages){
                     messageAdapter.notifyDataSetChanged()
                     if (messageAdapter.itemCount > 0){
@@ -150,6 +178,7 @@ class MainActivity : AppCompatActivity() {
                         messageListView.smoothScrollToPosition(messageAdapter.itemCount - 1)
                     }
                 }
+                showProgressBar(false)
             }
         }
     }
@@ -203,7 +232,11 @@ class MainActivity : AppCompatActivity() {
 
                 val newChannel = Channel(channelName, channelDescription, channelId)
                 MessageService.channels.add(newChannel)
-                channelAdapter.notifyDataSetChanged()
+                if(MessageService.channels.count() > 0){
+                    selectedChannel = MessageService.channels[0]
+                    channelAdapter.notifyDataSetChanged()
+                    updateWithChannel()
+                }
             }
         }
     }
@@ -220,9 +253,11 @@ class MainActivity : AppCompatActivity() {
                     val userAvatarBgColor = args[5] as String
                     val id = args[6] as String
                     val timeStamp = args[7] as String
+                    val userProfilePicture = args[8] as String
+                    AuthService.getPhoto(this, userProfilePicture){}
                     val newMessage = Message(
                         messageBody, userName, channelId, userAvatar,
-                        userAvatarBgColor, id, timeStamp
+                        userAvatarBgColor, id, timeStamp, userProfilePicture
                     )
                     MessageService.messages.add(newMessage)
                     messageAdapter.notifyDataSetChanged()
@@ -237,7 +272,8 @@ class MainActivity : AppCompatActivity() {
             val userId = UserDataService.id
             val channelId = selectedChannel!!.id
             socket.emit("newMessage", messageEditText.text.toString(), userId, channelId,
-                UserDataService.userName, UserDataService.avatar, UserDataService.avatarBgColor)
+                UserDataService.userName, UserDataService.avatar, UserDataService.avatarBgColor,
+                UserDataService.profilePicture)
             messageEditText.text.clear()
         }
     }
@@ -248,5 +284,16 @@ class MainActivity : AppCompatActivity() {
             inputManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
         }
 
+    }
+
+    private fun showProgressBar(show: Boolean){
+        if(show){
+            loadingProgressBar.visibility = View.VISIBLE
+        } else{
+            loadingProgressBar.visibility = View.INVISIBLE
+        }
+        //Enable buttons and text view if not showing progress bar
+        messageEditText.isEnabled = !show
+        sendMsgBtn.isEnabled = !show
     }
 }

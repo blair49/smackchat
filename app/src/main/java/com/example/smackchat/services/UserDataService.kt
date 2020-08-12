@@ -10,6 +10,7 @@ object UserDataService {
     var avatar = ""
     var email = ""
     var userName = ""
+    var profilePicture: String? = null
 
     fun getAvatarBgColor(avatarBgColor:String) : Int {
         val strippedColor = avatarBgColor.replace("[", "")
@@ -34,6 +35,7 @@ object UserDataService {
         avatar = ""
         email = ""
         userName = ""
+        profilePicture = null
 
         App.prefs.userEmail = ""
         App.prefs.authToken = ""

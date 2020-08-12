@@ -1,5 +1,6 @@
 package com.example.smackchat.services
 
+import android.content.Context
 import android.util.Log
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonArrayRequest
@@ -54,7 +55,7 @@ object MessageService {
         App.prefs.requestQueue.add(channelRequest)
     }
 
-    fun getMessages(channelId:String, complete: (Boolean) -> Unit){
+    fun getMessages(context: Context, channelId:String, complete: (Boolean) -> Unit){
         val url = "$URL_GET_MESSAGES$channelId"
 
         val messageRequest = object : JsonArrayRequest(Method.GET, url, null,
@@ -70,9 +71,12 @@ object MessageService {
                         val userAvatar = newMessage.getString("userAvatar")
                         val userAvatarBgColor = newMessage.getString("userAvatarColor")
                         val timeStamp = newMessage.getString("timeStamp")
+                        val userProfilePicture = newMessage.getString("userProfilePicture")
+                        //get and save profile picture of sender
+                        AuthService.getPhoto(context, userProfilePicture){}
                         //Create a message object and add it to message list
                         val message = Message(messageBody, username, channelId, userAvatar,
-                                        userAvatarBgColor, id, timeStamp)
+                                        userAvatarBgColor, id, timeStamp, userProfilePicture)
                         this.messages.add(message)
                     }
                     complete(true)

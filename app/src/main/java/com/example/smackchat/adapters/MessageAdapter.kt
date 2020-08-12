@@ -1,6 +1,7 @@
 package com.example.smackchat.adapters
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -9,8 +10,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smackchat.R
+import com.example.smackchat.controller.App
 import com.example.smackchat.model.Message
 import com.example.smackchat.services.UserDataService
+import java.io.File
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,14 +31,26 @@ class MessageAdapter(val context: Context, val messages: ArrayList<Message>)
         fun bindMessage(context: Context, message: Message){
             val resourceId = context.resources.getIdentifier(message.userAvatar,
                         "drawable", context.packageName)
-            userImage.setImageResource(resourceId)
-            userImage.setBackgroundColor(UserDataService.getAvatarBgColor(message.userAvatarBgColor))
+            message.userProfilePicture?.let {userProfilePicture ->
+                val imageFilePath = "${App.prefs.profilePicturePath}${File.separator}$userProfilePicture"
+                val imageFile = File(context.filesDir, imageFilePath)
+
+                if(imageFile.exists()){
+                    val imageBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
+                    userImage.setImageBitmap(imageBitmap)
+                } else{
+                    Log.d("ERROR", "Error getting photo")
+                    userImage.setImageResource(resourceId)
+                    userImage.setBackgroundColor(UserDataService.getAvatarBgColor(message.userAvatarBgColor))
+                }
+            }
+
             timeStamp.text = getDateString(message.timeStamp)
             userName.text = message.username
             messageBody.text = message.message
         }
 
-        fun getDateString(isoDateString: String) : String{
+        private fun getDateString(isoDateString: String) : String{
             val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
             isoFormatter.timeZone = TimeZone.getTimeZone("UTC")
             var convertedDate = Date()
