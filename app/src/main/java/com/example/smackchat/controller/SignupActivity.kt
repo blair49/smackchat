@@ -5,21 +5,20 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.media.Image
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.text.TextUtils
+import android.util.Patterns
 import android.view.View
 import android.widget.Toast
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.example.smackchat.R
 import com.example.smackchat.services.AuthService
-import com.example.smackchat.utilities.BROADCAST_USER_DATA_CHANGE
 import com.example.smackchat.utilities.MAX_IMAGE_FILE_SIZE
 import com.example.smackchat.utilities.MIN_PASSWORD_LENGTH
 import com.example.smackchat.utilities.SELECT_PROFILE_IMAGE
 import kotlinx.android.synthetic.main.activity_signup.*
-import java.io.InputStream
 import java.util.*
 
 class SignupActivity : AppCompatActivity() {
@@ -109,59 +108,52 @@ class SignupActivity : AppCompatActivity() {
         val userName = signupUserNameText.text.toString()
         val email = signupEmailText.text.toString()
         val password = signupPasswordText.text.toString()
-        var imageBitmap: Bitmap = (signupAvatarImage.drawable as BitmapDrawable).bitmap
-
+        val imageBitmap: Bitmap = (signupAvatarImage.drawable as BitmapDrawable).bitmap
+        val validEmail = !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
         if(userName.isEmpty()){
             Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show()
             return
-        } else if(email.isEmpty()){
-            Toast.makeText(this, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+        } else if(!validEmail){
+            Toast.makeText(this, "Please enter a valid email id", Toast.LENGTH_SHORT).show()
             return
-        } else if(password.length < MIN_PASSWORD_LENGTH){
+        } else if(password.isEmpty() || password.length < MIN_PASSWORD_LENGTH){
             Toast.makeText(this, "Password should be atleast 6 characters",
                 Toast.LENGTH_SHORT).show()
             return
         }
 
         showProgressSpinner(true)
-        AuthService.registerUser(email, password){ registrationSuccessful ->
+        AuthService.registerUser(userName, email, userAvatar, avatarBgColor, password){ registrationSuccessful ->
             if(registrationSuccessful){
-                AuthService.loginUser(email, password){ loginSuccessful ->
-                    if(loginSuccessful){
-                        AuthService.addUser(userName, email, userAvatar, avatarBgColor){ userAdded ->
-                            if(userAdded){
-                                AuthService.uploadPhoto(this, imageBitmap, imageFileName){ uploadSuccessful ->
-                                    if(uploadSuccessful) {
-                                        Toast.makeText(
-                                            this, "User Created successfully",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
-                                        LocalBroadcastManager.getInstance(this)
-                                            .sendBroadcast(userDataChange)
-                                        showProgressSpinner(false)
-                                        finish()
-                                    }
-                                    else{
-                                        errorToast()
-                                    }
-                                }
-                            }
-                            else{
-                                errorToast()
-                            }
-                        }
+                AuthService.uploadPhoto(this, imageBitmap, imageFileName){ uploadSuccessful ->
+                    if(uploadSuccessful) {
+                        Toast.makeText(
+                            this, "User Created successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        showProgressSpinner(false)
+                        showAlert()
+
                     }
                     else{
                         errorToast()
                     }
                 }
-
             }
             else{
                 errorToast()
             }
         }
+    }
+
+    private fun showAlert() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Verify Email")
+            .setMessage("Check your email inbox and spam for the verification email")
+            .setPositiveButton("OK"){ _, _ ->
+                finish()
+            }
+            .show()
     }
 
     private fun errorToast(){

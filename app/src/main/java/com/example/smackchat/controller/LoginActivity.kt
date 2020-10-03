@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.TextUtils
+import android.util.Patterns
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.example.smackchat.R
 import com.example.smackchat.services.AuthService
 import kotlinx.android.synthetic.main.activity_login.*
@@ -23,8 +26,9 @@ class LoginActivity : AppCompatActivity() {
     fun loginLoginBtnClicked(view: View){
         val email = loginEmailText.text.toString()
         val password = loginPasswordText.text.toString()
-        if(email.isEmpty()){
-            Toast.makeText(this, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+        val validEmail = !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        if(!validEmail){
+            Toast.makeText(this, "Please enter a valid email id", Toast.LENGTH_SHORT).show()
             return
         } else if (password.isEmpty()){
             Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show()
@@ -53,6 +57,17 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, "Something went wrong, please try again",
             Toast.LENGTH_LONG).show()
         showProgressSpinner(false)
+        showAlert()
+    }
+
+    private fun showAlert() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Verify Email")
+            .setMessage("Kindly verify your email if you haven't already. " +
+                    "Check your email inbox and spam for the verification email")
+            .setPositiveButton("OK"){ _, _ ->
+            }
+            .show()
     }
 
     private fun showProgressSpinner(show : Boolean){

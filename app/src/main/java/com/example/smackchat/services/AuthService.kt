@@ -23,16 +23,27 @@ object AuthService {
 //    var isLoggedIn = false
 //    var authToken = ""
 
-    fun registerUser(email: String, password: String, complete: (Boolean) -> Unit){
+    fun registerUser(name: String, email: String, avatar: String, avatarBgColor: String,
+                     password: String, complete: (Boolean) -> Unit){
         val url = URL_REGISTER
 
         val jsonBody = JSONObject()
+        jsonBody.put("name", name)
         jsonBody.put("email", email)
+        jsonBody.put("avatarName", avatar)
+        jsonBody.put("avatarColor", avatarBgColor)
         jsonBody.put("password", password)
         val requestBody = jsonBody.toString()
 
-        val registerRequest = object : StringRequest(Method.POST, url, Response.Listener {
-            complete(true)
+        val registerRequest = object : JsonObjectRequest(Method.POST, url, null,
+            Response.Listener { response ->
+                try {
+                    UserDataService.id = response.getString("id")
+                    complete(true)
+                }catch (e : JSONException){
+                    Log.d("JSON", "EXC : "+ e.localizedMessage)
+                    complete(false)
+                }
         }, Response.ErrorListener { error ->
             Log.d("ERROR", "Could not register user $error")
             complete(false)
@@ -66,7 +77,7 @@ object AuthService {
             Response.Listener { response ->
             //Handle response
             try {
-                App.prefs.userEmail = response.getString("user")
+                App.prefs.userEmail = email
                 App.prefs.authToken = response.getString("token")
                 App.prefs.isLoggedIn = true
                 complete(true)
