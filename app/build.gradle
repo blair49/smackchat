@@ -7,7 +7,7 @@ android {
 
 
     defaultConfig {
-        applicationId "com.example.smackchat"
+        applicationId "com.blairfernandes.smackchat"
         minSdkVersion 19
         targetSdkVersion 28
         versionCode 1
@@ -18,7 +18,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
